@@ -52,12 +52,41 @@ def get_all_playlists(youtube):
     return playlists
 
 
+def get_playlist_videos(youtube, playlist_id):
+    videos = []
+    next_page_token = None
+
+    while True:
+        response = (
+            youtube.playlistItems()
+            .list(
+                part="contentDetails",
+                playlistId=playlist_id,
+                maxResults=50,
+                pageToken=next_page_token,
+            )
+            .execute()
+        )
+
+        for item in response.get("items"):
+            video_id = item.get("contentDetails").get("videoId")
+            videos.append(video_id)
+
+        next_page_token = response.get("nextPageToken")
+
+        if not next_page_token:
+            break
+
+    return videos
+
+
 youtube = get_authenticated_service(
     API_SERVICE_NAME, API_VERSION, CLIENT_SECRETS_FILE, SCOPES
 )
 playlists = get_all_playlists(youtube)
 
-for playlist in playlists:
-    print(
-        f"ID: {playlist.get("id")}, Title: {playlist.get("title")}, Items: {playlist.get("itemCount")}"
-    )
+PLAYLIST_ID = ""
+
+videos = get_playlist_videos(youtube, PLAYLIST_ID)
+
+print(videos)
