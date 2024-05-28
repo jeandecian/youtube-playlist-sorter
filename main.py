@@ -19,4 +19,45 @@ def get_authenticated_service(
     )
 
 
-get_authenticated_service(API_SERVICE_NAME, API_VERSION, CLIENT_SECRETS_FILE, SCOPES)
+def get_all_playlists(youtube):
+    playlists = []
+    next_page_token = None
+
+    while True:
+        response = (
+            youtube.playlists()
+            .list(
+                part="snippet,contentDetails",
+                mine=True,
+                maxResults=50,
+                pageToken=next_page_token,
+            )
+            .execute()
+        )
+
+        for item in response.get("items"):
+            playlists.append(
+                {
+                    "id": item.get("id"),
+                    "title": item.get("snippet").get("title"),
+                    "itemCount": item.get("contentDetails").get("itemCount"),
+                }
+            )
+
+        next_page_token = response.get("nextPageToken")
+
+        if not next_page_token:
+            break
+
+    return playlists
+
+
+youtube = get_authenticated_service(
+    API_SERVICE_NAME, API_VERSION, CLIENT_SECRETS_FILE, SCOPES
+)
+playlists = get_all_playlists(youtube)
+
+for playlist in playlists:
+    print(
+        f"ID: {playlist.get("id")}, Title: {playlist.get("title")}, Items: {playlist.get("itemCount")}"
+    )
